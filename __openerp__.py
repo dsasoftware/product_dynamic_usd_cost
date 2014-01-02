@@ -22,7 +22,7 @@
     'author': 'Moldeo Interactive',
     'category': 'Localization/Argentina',
     'demo_xml': [],
-    'depends': ['account'],
+    'depends': ['purchase'],
     'description': '',
     'init_xml': [],
     'data': ['ir_cron.xml'],

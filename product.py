@@ -34,26 +34,25 @@ class product_product(osv.osv):
 
 	currency_obj = self.pool.get('res.currency')
 	product_obj = self.pool.get('product.product')
-	invoice_obj = self.pool.get('account.invoice')
-	invoice_line_obj = self.pool.get('account.invoice.line')
+	order_obj = self.pool.get('purchase.order')
+	order_line_obj = self.pool.get('purchase.order.line')
 	product_ids = product_obj.search(cr,uid,[('cost_method','=','usd_cost')])
 
 	for product in product_obj.browse(cr,uid,product_ids):
 		max_date = 0	
-		invoice_line_ids = invoice_line_obj.search(cr,uid,[('product_id','=',product.id)])
-		for invoice_line in invoice_line_obj.browse(cr,uid,invoice_line_ids):
-			if invoice_line.invoice_id.state in ('paid','open') \
-				and invoice_line.invoice_id.date_invoice > max_date \
-				and invoice_line.invoice_id.type == 'in_invoice':
+		order_line_ids = order_line_obj.search(cr,uid,[('product_id','=',product.id)])
+		for order_line in order_line_obj.browse(cr,uid,order_line_ids):
+			if order_line.order_id.state in ('sent','confirmed','approved','done') \
+				and order_line.order_id.date_order > max_date: 
 
 				currency_id = currency_obj.search(cr,uid,[('name','=','USD')])
 				data_currency = currency_obj.read(cr,uid,currency_id)		
-				price_unit_other_currency = invoice_line.product_usd_cost * data_currency[0]['rate']
+				price_unit_other_currency = order_line.product_usd_cost * data_currency[0]['rate']
 				vals_product = {
 					'standard_price': price_unit_other_currency
 					}
 				return_id = product_obj.write(cr,uid,product.id,vals_product)
-				max_date = invoice_line.invoice_id.date_invoice
+				max_date = order_line.order_id.date_order
 				_logger.debug("Updated product " + product.name)
 			
 	return None

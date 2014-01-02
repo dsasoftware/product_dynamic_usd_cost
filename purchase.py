@@ -21,54 +21,55 @@
 
 from openerp.osv import fields, osv
 
-class account_invoice_line(osv.osv):
-    _name = 'account.invoice.line'
-    _inherit = 'account.invoice.line'
+class purchase_order_line(osv.osv):
+    _name = 'purchase.order.line'
+    _inherit = 'purchase.order.line'
 
     _columns = {
 	'product_usd_cost': fields.float('US Dollar Cost'),
 	}
 
 
+	
     def create(self, cr, uid, vals, context=None):
 
 	data = vals
 
-	data_invoice = self.pool.get('account.invoice').read(cr,uid,data['invoice_id'])
-	if data_invoice['state'] == 'draft' and data_invoice['type'] == 'in_invoice':
-		if type(data['invoice_id']) == 'list':
-			data_invoice = data_invoice[0]
+	data_order = self.pool.get('purchase.order').read(cr,uid,data['order_id'])
+	if data_order['state'] == 'draft':
+		if type(data['order_id']) == 'list':
+			data_order = data_order[0]
 		if 'price_unit' in vals.keys():
 			price_unit = vals['price_unit']
 		else:
 			price_unit = data['price_unit']
-		if data_invoice['currency_id'][1] == 'ARS':
+		if data_order['currency_id'][1] == 'ARS':
 			currency_id = self.pool.get('res.currency').search(cr,uid,[('name','=','USD')])
 			if currency_id:
 				rate = self.pool.get('res.currency').read(cr,uid,currency_id)[0]['rate_silent']
 				vals['product_usd_cost'] = price_unit / rate
-        return super(account_invoice_line, self).create(cr, uid, vals, context=context)
+        return super(purchase_order_line, self).create(cr, uid, vals, context=context)
 
     def write(self, cr, uid, ids, vals, context=None):
 
 	data = self.read(cr,uid,ids)
 	data = data[0]
 
-	data_invoice = self.pool.get('account.invoice').read(cr,uid,data['invoice_id'][0])
-	if data_invoice['state'] == 'draft' and data_invoice['type'] == 'in_invoice':
-		if type(data['invoice_id']) == 'list':
-			data_invoice = data_invoice[0]
+	data_order = self.pool.get('purchase.order').read(cr,uid,data['order_id'][0])
+	if data_order['state'] == 'draft':
+		if type(data['order_id']) == 'list':
+			data_order = data_order[0]
 		if 'price_unit' in vals.keys():
 			price_unit = vals['price_unit']
 		else:
 			price_unit = data['price_unit']
-		if data_invoice['currency_id'][1] == 'ARS':
+		if data_order['currency_id'][1] == 'ARS':
 			currency_id = self.pool.get('res.currency').search(cr,uid,[('name','=','USD')])
 			if currency_id:
 				rate = self.pool.get('res.currency').read(cr,uid,currency_id)[0]['rate_silent']
 				vals['product_usd_cost'] = price_unit / rate
-        return super(account_invoice_line, self).write(cr, uid, ids, vals, context=context)
+        return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
 
-account_invoice_line()
+purchase_order_line()
 
 # vim:expandtab:smartindent:tabstop=4:softtabstop=4:shiftwidth=4:
