@@ -36,7 +36,7 @@ class product_product(osv.osv):
 	product_obj = self.pool.get('product.product')
 	order_obj = self.pool.get('purchase.order')
 	order_line_obj = self.pool.get('purchase.order.line')
-	product_ids = product_obj.search(cr,uid,[('cost_method','=','usd_cost')])
+	product_ids = product_obj.search(cr,uid,['|',('cost_method','=','usd_cost'),('cost_method','=','usd_30_cost')])
 
 	for product in product_obj.browse(cr,uid,product_ids):
 		max_date = 0	
@@ -46,8 +46,17 @@ class product_product(osv.osv):
 				and order_line.order_id.date_order > max_date: 
 
 				currency_id = currency_obj.search(cr,uid,[('name','=','USD')])
-				data_currency = currency_obj.read(cr,uid,currency_id)		
-				price_unit_other_currency = order_line.product_usd_cost * data_currency[0]['rate']
+				if product.cost_method == 'usd_cost':
+					data_currency = currency_obj.read(cr,uid,currency_id)		
+					price_unit_other_currency = order_line.product_usd_cost * data_currency[0]['rate']
+				else:
+					future_id = self.pool.get('res.currency.future').search(cr,uid,[('currency_id','=',currency_id[0]),\
+						('days','=',30)])
+					if future_id:
+                                        	data_future = self.pool.get('res.currency.future').read(cr,uid,future_id)
+                                                rate = data_future[0]['rate']
+						price_unit_other_currency = order_line.product_usd_cost * rate
+
 				vals_product = {
 					'standard_price': price_unit_other_currency
 					}
@@ -61,6 +70,7 @@ class product_product(osv.osv):
 	        'cost_method': fields.selection([('standard','Standard Price'), 
 						('average','Average Price'),
 						('last_purchase','Last Purchase'),
+						('usd_30_cost','30 days USD Cost'),
 						('usd_cost','USD Cost')],
 						 'Costing Method', required=True,
 						help="Standard Price: The cost price is manually updated at the end of a specific period (usually every year). \nAverage Price: The cost price is recomputed at each incoming shipment."),

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+    <record model ="ir.ui.view" id="view_currency_future_form">
+        <field name="name">res.currency.future.form</field>
+        <field name="model">res.currency</field>
+	<field name="inherit_id" ref="base.view_currency_form" />
+        <field name="arch" type="xml">
+             <field name="rate_ids" position="after">
+		  <field name="future_id">
+                        <tree string="Futures" editable="bottom">
+                            <field name="days"/>
+                            <field name="rate"/>
+                        </tree>
+	       	</field>
+	     </field>
+	</field>
+    </record>
+
+
+   </data>
+</openerp>
