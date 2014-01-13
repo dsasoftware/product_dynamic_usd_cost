@@ -2,7 +2,7 @@
 <openerp>
     <data>
 
-    <!-- record model ="ir.ui.view" id="view_currency_future_form">
+    <record model ="ir.ui.view" id="view_currency_future_form">
         <field name="name">res.currency.future.form</field>
         <field name="model">res.currency</field>
 	<field name="inherit_id" ref="base.view_currency_form" />
@@ -16,7 +16,7 @@
 	       	</field>
 	     </field>
 	</field>
-    </record -->
+    </record>
 
 
    </data>

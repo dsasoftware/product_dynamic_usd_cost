@@ -39,30 +39,38 @@ class product_product(osv.osv):
 	product_ids = product_obj.search(cr,uid,['|',('cost_method','=','usd_cost'),('cost_method','=','usd_30_cost')])
 
 	for product in product_obj.browse(cr,uid,product_ids):
-		max_date = 0	
-		order_line_ids = order_line_obj.search(cr,uid,[('product_id','=',product.id)])
-		for order_line in order_line_obj.browse(cr,uid,order_line_ids):
-			if order_line.order_id.state in ('sent','confirmed','approved','done') \
-				and order_line.order_id.date_order > max_date: 
+		max_date = 0
+		product_usd_cost = 0
+		# import pdb;pdb.set_trace()
+		if not product.product_usd_cost	or product.product_usd_cost < 0:
+			order_line_ids = order_line_obj.search(cr,uid,[('product_id','=',product.id)])
+			for order_line in order_line_obj.browse(cr,uid,order_line_ids):
+				if order_line.order_id.state in ('sent','confirmed','approved','done') \
+					and order_line.order_id.date_order > max_date: 
 
-				currency_id = currency_obj.search(cr,uid,[('name','=','USD')])
-				if product.cost_method == 'usd_cost':
-					data_currency = currency_obj.read(cr,uid,currency_id)		
-					price_unit_other_currency = order_line.product_usd_cost * data_currency[0]['rate']
-				else:
-					future_id = self.pool.get('res.currency.future').search(cr,uid,[('currency_id','=',currency_id[0]),\
-						('days','=',30)])
-					if future_id:
-                                        	data_future = self.pool.get('res.currency.future').read(cr,uid,future_id)
-                                                rate = data_future[0]['rate']
-						price_unit_other_currency = order_line.product_usd_cost * rate
+					product_usd_cost = order_line.product_usd_cost
+					max_date = order_line.order_id.date_order
+		else:
+			product_usd_cost = product.product_usd_cost	
 
-				vals_product = {
-					'standard_price': price_unit_other_currency
-					}
-				return_id = product_obj.write(cr,uid,product.id,vals_product)
-				max_date = order_line.order_id.date_order
-				_logger.debug("Updated product " + product.name)
+		currency_id = currency_obj.search(cr,uid,[('name','=','USD')])
+		if product.cost_method == 'usd_cost':
+			data_currency = currency_obj.read(cr,uid,currency_id)		
+			price_unit_other_currency = product_usd_cost * data_currency[0]['rate']
+		else:
+			future_id = self.pool.get('res.currency.future').search(cr,uid,[('currency_id','=',currency_id[0]),\
+					('days','=',30)])
+			if future_id:
+                                data_future = self.pool.get('res.currency.future').read(cr,uid,future_id)
+                	        rate = data_future[0]['rate']
+				price_unit_other_currency = product_usd_cost * rate
+
+		vals_product = {
+				'standard_price': price_unit_other_currency,
+				'product_usd_cost': product_usd_cost * (-1),
+				}
+		return_id = product_obj.write(cr,uid,product.id,vals_product)
+		_logger.debug("Updated product " + product.name)
 			
 	return None
 
@@ -74,6 +82,7 @@ class product_product(osv.osv):
 						('usd_cost','USD Cost')],
 						 'Costing Method', required=True,
 						help="Standard Price: The cost price is manually updated at the end of a specific period (usually every year). \nAverage Price: The cost price is recomputed at each incoming shipment."),
+		'product_usd_cost': fields.float('USD Cost'),
 		}
 
 product_product()

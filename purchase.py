@@ -76,8 +76,19 @@ class purchase_order_line(osv.osv):
 		if data_order['currency_id'][1] == 'ARS':
 			currency_id = self.pool.get('res.currency').search(cr,uid,[('name','=','USD')])
 			if currency_id:
-				rate = self.pool.get('res.currency').read(cr,uid,currency_id)[0]['rate_silent']
-				vals['product_usd_cost'] = price_unit / rate
+				if data_product['cost_method'] == 'usd_cost':
+					rate = self.pool.get('res.currency').read(cr,uid,currency_id)[0]['rate_silent']
+					vals['product_usd_cost'] = price_unit / rate
+				else:
+					if data_product['cost_method'] == 'usd_30_cost':
+						future_id = self.pool.get('res.currency.future').search(cr,uid,[('currency_id','=',currency_id),\
+							('days','=',30)])
+						if future_id:
+							data_future = self.pool.get('res.currency.future').read(cr,uid,future_id)
+							rate = data_future[0]['rate']
+							vals['product_usd_cost'] = price_unit / rate
+
+
         return super(purchase_order_line, self).write(cr, uid, ids, vals, context=context)
 
 purchase_order_line()
